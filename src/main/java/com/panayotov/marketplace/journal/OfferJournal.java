@@ -33,11 +33,8 @@ public class OfferJournal {
                 .filter(current -> current.equals(offer))
                 .findFirst()
                 .ifPresent(current -> {
-                    if (current.quantity() == quntity) {
-                        offers.remove(current);
-                    } else {
-                        amend(current, quntity);
-                    }
+                    if (current.quantity() == quntity) offers.remove(current);
+                    else amend(current, quntity);
                 });
     }
 
