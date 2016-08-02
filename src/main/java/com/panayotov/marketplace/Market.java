@@ -16,7 +16,7 @@ public class Market {
 
     private final QuotesMatcher quotesMatcher;
     private final OrderGenerator orderGenerator;
-    private JournalService journalService;
+    private final JournalService journalService;
 
     public Market(QuotesMatcher quotesMatcher,
                   OrderGenerator orderGenerator,
@@ -30,15 +30,15 @@ public class Market {
     public void place(Bid bid) {
         Optional<Offer> matchingOffer = offerFor(bid);
 
-        if (!matchingOffer.isPresent()) journalService.add(bid);
-        else satisfy(bid, matchingOffer.get());
+        if (matchingOffer.isPresent()) satisfy(bid, matchingOffer.get());
+        else journalService.add(bid);
     }
 
     public void place(Offer offer) {
         Optional<Bid> matchingBid = bidFor(offer);
 
-        if (!matchingBid.isPresent()) journalService.add(offer);
-        else satisfy(matchingBid.get(), offer);
+        if (matchingBid.isPresent()) satisfy(matchingBid.get(), offer);
+        else journalService.add(offer);
     }
 
     public List<Bid> bids(String userId) {
