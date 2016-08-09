@@ -3,7 +3,7 @@ package com.panayotov.marketplace;
 import com.panayotov.marketplace.domain.Bid;
 import com.panayotov.marketplace.domain.Offer;
 import com.panayotov.marketplace.domain.Order;
-import com.panayotov.marketplace.journal.JournalService;
+import com.panayotov.marketplace.store.MarketData;
 import org.junit.Test;
 
 import java.math.BigDecimal;
@@ -21,9 +21,9 @@ public class MarketTest {
 
     private final QuotesMatcher quotesMatcher = mock(QuotesMatcher.class);
     private final OrderGenerator orderGenerator = mock(OrderGenerator.class);
-    private final JournalService journalService = mock(JournalService.class);
+    private final MarketData marketData = mock(MarketData.class);
 
-    private final Market market = new Market(quotesMatcher, orderGenerator, journalService);
+    private final Market market = new Market(quotesMatcher, orderGenerator, marketData);
 
     private final Bid bid = mock(Bid.class);
     private final Offer offer = mock(Offer.class);
@@ -33,49 +33,49 @@ public class MarketTest {
     public void placesBid() {
         market.place(bid);
 
-        verify(journalService).add(bid);
-        verify(journalService, never()).add(order);
+        verify(marketData).add(bid);
+        verify(marketData, never()).add(order);
     }
 
     @Test
     public void satisfiesBid_IfMatchingOfferFound() {
-        when(journalService.offers()).thenReturn(asList(offer));
+        when(marketData.offers()).thenReturn(asList(offer));
         when(quotesMatcher.matches(bid, offer)).thenReturn(true);
         when(orderGenerator.orderFrom(bid, offer)).thenReturn(order);
 
         market.place(bid);
 
-        verify(journalService, never()).add(bid);
-        verify(journalService).add(order);
-        verify(journalService).reduce(offer, bid.quantity());
+        verify(marketData, never()).add(bid);
+        verify(marketData).add(order);
+        verify(marketData).reduce(offer, bid.quantity());
     }
 
     @Test
     public void placesOffer() {
         market.place(offer);
 
-        verify(journalService).add(offer);
-        verify(journalService, never()).add(order);
+        verify(marketData).add(offer);
+        verify(marketData, never()).add(order);
     }
 
     @Test
     public void satisfiesOffer_IfMatchingBidFound() {
-        when(journalService.bids()).thenReturn(asList(bid));
+        when(marketData.bids()).thenReturn(asList(bid));
         when(quotesMatcher.matches(bid, offer)).thenReturn(true);
         when(orderGenerator.orderFrom(bid, offer)).thenReturn(order);
 
         market.place(offer);
 
-        verify(journalService, never()).add(offer);
-        verify(journalService).add(order);
-        verify(journalService).reduce(offer, bid.quantity());
+        verify(marketData, never()).add(offer);
+        verify(marketData).add(order);
+        verify(marketData).reduce(offer, bid.quantity());
     }
 
     @Test
     public void listsBids_ByUserId() {
         List bids = mock(List.class);
 
-        when(journalService.bids("buyer1")).thenReturn(bids);
+        when(marketData.bids("buyer1")).thenReturn(bids);
 
         assertThat(market.bids("buyer1"), is(bids));
     }
@@ -84,7 +84,7 @@ public class MarketTest {
     public void listsOffers_ByUserId() {
         List offers = mock(List.class);
 
-        when(journalService.offers("seller1")).thenReturn(offers);
+        when(marketData.offers("seller1")).thenReturn(offers);
 
         assertThat(market.offers("seller1"), is(offers));
     }
@@ -93,7 +93,7 @@ public class MarketTest {
     public void listsOrders_ForBuyerId() {
         List orders = mock(List.class);
 
-        when(journalService.ordersForBuyer("buyer1")).thenReturn(orders);
+        when(marketData.ordersForBuyer("buyer1")).thenReturn(orders);
 
         assertThat(market.ordersForBuyerId("buyer1"), is(orders));
     }
@@ -102,14 +102,14 @@ public class MarketTest {
     public void listsOrders_ForSellerId() {
         List orders = mock(List.class);
 
-        when(journalService.ordersForSeller("seller1")).thenReturn(orders);
+        when(marketData.ordersForSeller("seller1")).thenReturn(orders);
 
         assertThat(market.ordersForSellerId("seller1"), is(orders));
     }
 
     @Test
     public void findsHighestBidPriceForItemId() {
-        when(journalService.bids()).thenReturn(asList(
+        when(marketData.bids()).thenReturn(asList(
                 aBid("item1", asDecimal(1)),
                 aBid("item1", asDecimal(3)),
                 aBid("item1", asDecimal(2)),
@@ -126,7 +126,7 @@ public class MarketTest {
 
     @Test
     public void findsLowestOfferPriceForItemId() {
-        when(journalService.offers()).thenReturn(asList(
+        when(marketData.offers()).thenReturn(asList(
                 anOffer("item1", asDecimal(3)),
                 anOffer("item1", asDecimal(2)),
                 anOffer("item1", asDecimal(4)),
